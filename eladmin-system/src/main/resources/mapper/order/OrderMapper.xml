@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="me.zhengjie.modules.order.mapper.OrderMapper">
+    <resultMap id="BaseResultMap" type="me.zhengjie.modules.order.domain.Order">
+        <id column="id" property="id"/>
+        <result column="order_num" property="orderNum"/>
+        <result column="order_time" property="orderTime"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="product_title" property="productTitle"/>
+        <result column="delivery_date" property="deliveryDate"/>
+        <result column="product_count" property="productCount"/>
+        <result column="product_size" property="productSize"/>
+        <result column="make_up_size" property="makeUpSize"/>
+        <result column="facial_tissue_set" property="facialTissueSet"/>
+        <result column="adjust_paper_size" property="adjustPaperSize"/>
+        <result column="cut_paper_size" property="cutPaperSize"/>
+        <result column="print_color" property="printColor"/>
+        <result column="tile_paper_set" property="tilePaperSet"/>
+        <result column="tile_paper_size" property="tilePaperSize"/>
+        <result column="knife_mold" property="knifeMold"/>
+        <result column="card_requirements" property="cardRequirements"/>
+        <result column="shipment_way" property="shipmentWay"/>
+        <result column="pack_require" property="packRequire"/>
+        <result column="remarks" property="remarks"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_delete" property="isDelete"/>
+        <result column="delete_user" property="deleteUser"/>
+        <result column="delete_time" property="deleteTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, order_num, order_time, customer_name, product_title, delivery_date, product_count, product_size, make_up_size, facial_tissue_set, adjust_paper_size, cut_paper_size, print_color, tile_paper_set, tile_paper_size, knife_mold, card_requirements, shipment_way, pack_require, remarks, create_user, create_time, update_user, update_time, is_delete, delete_user, delete_time
+    </sql>
+
+<!--    <select id="findAll" resultMap="BaseResultMap">-->
+<!--        select-->
+<!--        <include refid="Base_Column_List"/>-->
+<!--        from tb_order-->
+<!--        <where>-->
+<!--        </where>-->
+<!--        order by id desc-->
+<!--    </select>-->
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT o.*,u.nick_name as createUserName
+        FROM `tb_order` o
+        left join sys_user u on o.create_user = u.user_id
+        where o.is_delete = 0
+        order by id desc
+    </select>
+</mapper>
