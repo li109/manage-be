@@ -48,6 +48,12 @@
         FROM `tb_order` o
         left join sys_user u on o.create_user = u.user_id
         where o.is_delete = 0
+        <if test="criteria.orderNum != null and criteria.orderNum != ''">
+            and o.order_num like concat('%', #{criteria.orderNum}, '%')
+        </if>
+        <if test="criteria.customerName != null and criteria.customerName != ''">
+            and o.customer_name like concat('%', #{criteria.customerName}, '%')
+        </if>
         order by id desc
     </select>
 </mapper>

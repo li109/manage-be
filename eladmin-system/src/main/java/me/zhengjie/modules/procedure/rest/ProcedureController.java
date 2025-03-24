@@ -15,19 +15,17 @@
  */
 package me.zhengjie.modules.procedure.rest;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
+import me.zhengjie.annotation.rest.AnonymousGetMapping;
 import me.zhengjie.annotation.rest.AnonymousPostMapping;
 import me.zhengjie.modules.procedure.domain.Procedure;
 import me.zhengjie.modules.procedure.service.ProcedureService;
 import me.zhengjie.modules.system.domain.DictDetail;
-import me.zhengjie.modules.system.domain.dto.DictDetailQueryCriteria;
 import me.zhengjie.modules.system.service.DictDetailService;
-import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -78,7 +76,7 @@ public class ProcedureController {
     }
 
     @ApiOperation("查询工序列表(小程序端，无需鉴权)")
-    @AnonymousPostMapping("get")
+    @AnonymousGetMapping("getProcedureList")
     public ResponseEntity<List<DictDetail>> queryDictDetail() {
         return new ResponseEntity<>(dictDetailService.getDictByName("procedure_status"), HttpStatus.OK);
     }

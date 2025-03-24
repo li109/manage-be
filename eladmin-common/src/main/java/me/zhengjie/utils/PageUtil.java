@@ -44,7 +44,7 @@ public class PageUtil extends cn.hutool.core.util.PageUtil {
      * Page 数据处理
      */
     public static <T> PageResult<T> toPage(IPage<T> page) {
-        return new PageResult<>(page.getRecords(), page.getTotal());
+        return new PageResult<>(page.getRecords(), page.getTotal(),page.getCurrent(),page.getSize(),page.getPages());
     }
 
     /**

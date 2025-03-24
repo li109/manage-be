@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
-import me.zhengjie.annotation.rest.AnonymousPostMapping;
+import me.zhengjie.annotation.rest.AnonymousGetMapping;
 import me.zhengjie.modules.order.domain.Order;
 import me.zhengjie.modules.order.domain.dto.OrderQueryCriteria;
 import me.zhengjie.modules.order.service.OrderService;
@@ -63,7 +63,7 @@ public class OrderController {
         return new ResponseEntity<>(orderService.queryAll(criteria, page), HttpStatus.OK);
     }
 
-    @AnonymousPostMapping("orderNumList")
+    @AnonymousGetMapping("orderNumList")
     @ApiOperation("查询所有订单编号(小程序端，无需鉴权)")
     public ResponseEntity<List<Order>> orderNumList(OrderQueryCriteria criteria) {
         return new ResponseEntity<>(orderService.queryAll(criteria), HttpStatus.OK);

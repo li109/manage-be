@@ -30,4 +30,10 @@ public class OrderQueryCriteria{
 
     @ApiModelProperty(value = "每页数据量", example = "10")
     private Integer size = 10;
+
+    @ApiModelProperty(value = "生产单号")
+    private String orderNum;
+
+    @ApiModelProperty(value = "客户名称")
+    private String customerName;
 }
