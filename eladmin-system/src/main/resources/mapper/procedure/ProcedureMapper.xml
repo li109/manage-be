@@ -23,6 +23,20 @@
     <sql id="Base_Column_List">
         id, order_id, workmanship, produce_num, loss_num, is_check, check_time, check_user, create_user, create_time, update_user, update_time, is_delete, delete_user, delete_time, detail_value
     </sql>
+    <select id="setLastFinishProcedure" resultType="java.lang.String">
+        SELECT a.label
+        FROM `tb_procedure` p
+        left join (
+            SELECT de.detail_id,de.label,de.`value`,de.dict_sort
+            FROM `sys_dict_detail` de
+            left join sys_dict di on di.dict_id = de.dict_id
+            where di.`name`='procedure_status'
+            order by de.dict_sort
+        )a on p.detail_value = a.`value`
+        where order_id=#{orderId} and is_delete = 0 and create_user is not null
+        order by a.dict_sort desc
+        limit 1
+    </select>
 
     <select id="findAll" resultMap="BaseResultMap">
         select
@@ -42,11 +56,17 @@
             order by de.dict_sort
         )a
         left join (
-            select p.*,u.nick_name as createUserName
+            select p.*,u.nick_name as createUserName,u2.nick_name as checkUserName
             from tb_order o
             left join tb_procedure p on o.id = p.order_id
             left join sys_user u on p.create_user = u.user_id
+            left join sys_user u2 on p.check_user = u2.user_id
             where o.id = #{orderId} and p.is_delete=0
         )b on a.`value` = b.detail_value
+    </select>
+    <select id="selectProcedureCount" resultType="java.lang.Integer">
+        SELECT count(1) as total
+        FROM `tb_procedure`
+        where order_id=#{orderId} and is_delete = 0 and create_user is not null
     </select>
 </mapper>

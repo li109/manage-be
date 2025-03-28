@@ -18,10 +18,14 @@ package me.zhengjie.modules.procedure.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import me.zhengjie.modules.order.domain.Order;
+import me.zhengjie.modules.order.mapper.OrderMapper;
 import me.zhengjie.modules.procedure.domain.Procedure;
 import me.zhengjie.modules.procedure.domain.dto.ProcedureQueryCriteria;
 import me.zhengjie.modules.procedure.mapper.ProcedureMapper;
 import me.zhengjie.modules.procedure.service.ProcedureService;
+import me.zhengjie.modules.system.domain.User;
+import me.zhengjie.modules.system.mapper.UserMapper;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -47,6 +51,8 @@ import java.util.Map;
 public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure> implements ProcedureService {
 
     private final ProcedureMapper procedureMapper;
+    private final OrderMapper orderMapper;
+    private final UserMapper userMapper;
 
     @Override
     public PageResult<Procedure> queryAll(ProcedureQueryCriteria criteria, Page<Object> page) {
@@ -59,9 +65,44 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
     }
 
     @Override
+    public Procedure getById(Long id) {
+        Procedure procedure = procedureMapper.selectById(id);
+        if (procedure.getIsCheck() != null && procedure.getIsCheck() && procedure.getCheckUser() != null) {
+            User user = userMapper.selectById(procedure.getCheckUser());
+            if (user != null) {
+                procedure.setCheckUserName(user.getNickName());
+            }
+        }
+        if (procedure.getCreateUser() != null) {
+            User user = userMapper.selectById(procedure.getCheckUser());
+            if (user != null) {
+                procedure.setCreateUserName(user.getNickName());
+            }
+        }
+        return procedure;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(Procedure resources) {
+        // 基础字段赋值
+        resources.setCreateUser(SecurityUtils.getCurrentUserId());
+        resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        resources.setIsDelete(false);
         procedureMapper.insert(resources);
+        // 变更工单主体信息
+        if (resources.getOrderId() != null) {
+            Order order = orderMapper.selectById(resources.getOrderId());
+            if (order != null) {
+                // 获取当前工单完成工序数量
+                Integer count = procedureMapper.selectProcedureCount(order.getId());
+                order.setProgress(count * 10 + "%"); // 进度
+                // 获取当前工单排序最靠后的工序名称
+                String name = procedureMapper.setLastFinishProcedure(order.getId());
+                order.setFinishProcedure(name); //当前工序
+                orderMapper.updateById(order);
+            }
+        }
     }
 
     @Override
@@ -69,7 +110,30 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
     public void update(Procedure resources) {
         Procedure procedure = getById(resources.getId());
         procedure.copy(resources);
+        // 基础字段赋值
+        procedure.setUpdateUser(SecurityUtils.getCurrentUserId());
+        procedure.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+        procedure.setCreateUser(SecurityUtils.getCurrentUserId());
+        procedure.setCreateTime(new Timestamp(System.currentTimeMillis()));
+//        if (resources.getIsCheck() != null && resources.getIsCheck()) {
+//            procedure.setIsCheck(true);
+//            procedure.setCheckUser(SecurityUtils.getCurrentUserId());
+//            procedure.setCheckTime(new Timestamp(System.currentTimeMillis()));
+//        }
         procedureMapper.updateById(procedure);
+        // 变更工单主体信息
+        if (procedure.getOrderId() != null) {
+            Order order = orderMapper.selectById(procedure.getOrderId());
+            if (order != null) {
+                // 获取当前工单完成工序数量
+                Integer count = procedureMapper.selectProcedureCount(order.getId());
+                order.setProgress(count * 10 + "%"); // 进度
+                // 获取当前工单排序最靠后的工序名称
+                String name = procedureMapper.setLastFinishProcedure(order.getId());
+                order.setFinishProcedure(name); //当前工序
+                orderMapper.updateById(order);
+            }
+        }
     }
 
     @Override
@@ -108,5 +172,17 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void check(Long id) {
+        Procedure procedure = procedureMapper.selectById(id);
+        if (procedure != null) {
+            procedure.setIsCheck(true);
+            procedure.setCheckUser(SecurityUtils.getCurrentUserId());
+            procedure.setCheckTime(new Timestamp(System.currentTimeMillis()));
+        }
+        procedureMapper.updateById(procedure);
     }
 }

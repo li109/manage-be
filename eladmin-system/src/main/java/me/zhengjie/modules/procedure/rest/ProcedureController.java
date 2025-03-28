@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import me.zhengjie.annotation.Log;
 import me.zhengjie.annotation.rest.AnonymousGetMapping;
 import me.zhengjie.annotation.rest.AnonymousPostMapping;
+import me.zhengjie.annotation.rest.AnonymousPutMapping;
 import me.zhengjie.modules.procedure.domain.Procedure;
 import me.zhengjie.modules.procedure.service.ProcedureService;
 import me.zhengjie.modules.system.domain.DictDetail;
@@ -29,9 +30,11 @@ import me.zhengjie.modules.system.service.DictDetailService;
 import me.zhengjie.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -56,54 +59,47 @@ public class ProcedureController {
 //        procedureService.download(procedureService.queryAll(criteria), response);
 //    }
 
-//    @GetMapping
-//    @ApiOperation("查询工序")
+    @AnonymousGetMapping("info")
+    @ApiOperation("查询工序详情(小程序端)")
+//    @GetMapping("info")
 //    @PreAuthorize("@el.check('procedure:list')")
-//    public ResponseEntity<PageResult<Procedure>> queryProcedure(ProcedureQueryCriteria criteria){
-//        Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
-//        return new ResponseEntity<>(procedureService.queryAll(criteria,page),HttpStatus.OK);
-//    }
-
-    @AnonymousPostMapping("save")
-    @Log("新增工序")
-    @ApiOperation("新增工序(小程序端，无需鉴权)")
-    public ResponseEntity<Object> createProcedure(@Validated @RequestBody Procedure resources) {
-        resources.setCreateUser(SecurityUtils.getCurrentUserId());
-        resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        resources.setIsDelete(false);
-        procedureService.create(resources);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    public ResponseEntity<Procedure> queryProcedure(@ApiParam(value = "工序ID") @RequestParam("id") Long id) {
+        Procedure procedure = procedureService.getById(id);
+        return new ResponseEntity<>(procedure, HttpStatus.OK);
     }
 
-    @ApiOperation("查询工序列表(小程序端，无需鉴权)")
+//    @Log("新增工序")
+//    @ApiOperation("新增工序(小程序端)")
+//    @AnonymousPostMapping("save")
+//    public ResponseEntity<Object> createProcedure(@Validated @RequestBody Procedure resources) {
+//        procedureService.create(resources);
+//        return new ResponseEntity<>(HttpStatus.CREATED);
+//    }
+
+    @ApiOperation("查询工序下拉列表(小程序端)")
     @AnonymousGetMapping("getProcedureList")
     public ResponseEntity<List<DictDetail>> queryDictDetail() {
         return new ResponseEntity<>(dictDetailService.getDictByName("procedure_status"), HttpStatus.OK);
     }
 
+    @Log("修改工序")
+    @ApiOperation("修改工序(PC、小程序端)")
+    @AnonymousPutMapping("update")
 //    @PutMapping("update")
-//    @Log("修改工序")
-//    @ApiOperation("修改工序")
 //    @PreAuthorize("@el.check('procedure:edit')")
-//    public ResponseEntity<Object> updateProcedure(@Validated @RequestBody Procedure resources) {
-//        resources.setUpdateUser(SecurityUtils.getCurrentUserId());
-//        resources.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-//        procedureService.update(resources);
-//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//    }
+    public ResponseEntity<Object> updateProcedure(@Validated @RequestBody Procedure resources) {
+        procedureService.update(resources);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @Log("审核工序")
-    @ApiOperation("审核工序")
-    @PostMapping(value = "check")
-    @PreAuthorize("@el.check('order:check')")
+    @ApiOperation("审核工序(PC、小程序端)")
+    @AnonymousPostMapping("check")
+//    @PostMapping(value = "check")
+//    @PreAuthorize("@el.check('order:check')")
     public ResponseEntity<Object> checkProcedure(@ApiParam(value = "工序ID") @RequestParam("id") Long id) {
-        Procedure procedure = new Procedure();
-        procedure.setId(id);
-        procedure.setIsCheck(true);
-        procedure.setCheckUser(SecurityUtils.getCurrentUserId());
-        procedure.setCheckTime(new Timestamp(System.currentTimeMillis()));
-        procedureService.update(procedure);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        procedureService.check(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 //    @DeleteMapping("delete")

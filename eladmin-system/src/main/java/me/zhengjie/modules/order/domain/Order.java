@@ -130,6 +130,12 @@ public class Order implements Serializable {
     @TableField(exist = false)
     private List<Procedure> list;
 
+    @ApiModelProperty(value = "完成进度（%）")
+    private String progress;
+
+    @ApiModelProperty(value = "当前完成工序")
+    private String finishProcedure;
+
     public void copy(Order source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));
     }

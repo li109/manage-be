@@ -64,14 +64,15 @@ public class OrderController {
     }
 
     @AnonymousGetMapping("orderNumList")
-    @ApiOperation("查询所有订单编号(小程序端，无需鉴权)")
+    @ApiOperation("查询所有订单编号(小程序端)")
     public ResponseEntity<List<Order>> orderNumList(OrderQueryCriteria criteria) {
         return new ResponseEntity<>(orderService.queryAll(criteria), HttpStatus.OK);
     }
 
-    @GetMapping("info")
-    @ApiOperation("查询订单信息")
-    @PreAuthorize("@el.check('order:info')")
+    @AnonymousGetMapping("info")
+    @ApiOperation("查询订单信息(PC、小程序端)")
+//    @GetMapping("info")
+//    @PreAuthorize("@el.check('order:info')")
     public ResponseEntity<Order> queryOrderInfo(@ApiParam(value = "订单ID") @RequestParam("id") Long id) {
         Order order = orderService.getById(id);
         return new ResponseEntity<>(order, HttpStatus.OK);
@@ -82,9 +83,6 @@ public class OrderController {
     @ApiOperation("新增订单")
     @PreAuthorize("@el.check('order:add')")
     public ResponseEntity<Object> createOrder(@Validated @RequestBody Order resources) {
-        resources.setCreateUser(SecurityUtils.getCurrentUserId());
-        resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        resources.setIsDelete(false);
         orderService.create(resources);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -94,10 +92,8 @@ public class OrderController {
     @ApiOperation("修改订单")
     @PreAuthorize("@el.check('order:edit')")
     public ResponseEntity<Object> updateOrder(@Validated @RequestBody Order resources) {
-        resources.setUpdateUser(SecurityUtils.getCurrentUserId());
-        resources.setUpdateTime(new Timestamp(System.currentTimeMillis()));
         orderService.update(resources);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("delete")

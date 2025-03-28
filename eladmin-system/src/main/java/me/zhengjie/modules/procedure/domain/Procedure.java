@@ -51,6 +51,9 @@ public class Procedure implements Serializable {
     @ApiModelProperty(value = "生产数量")
     private Integer produceNum;
 
+    @ApiModelProperty(value = "生产数量(中文)")
+    private String produceNumStr;
+
     @ApiModelProperty(value = "损耗数量")
     private Integer lossNum;
 
@@ -62,6 +65,10 @@ public class Procedure implements Serializable {
 
     @ApiModelProperty(value = "审核人ID")
     private Long checkUser;
+
+    @ApiModelProperty(value = "审核人")
+    @TableField(exist = false)
+    private String checkUserName;
 
     @ApiModelProperty(value = "创建用户ID（机长签字）")
     private Long createUser;

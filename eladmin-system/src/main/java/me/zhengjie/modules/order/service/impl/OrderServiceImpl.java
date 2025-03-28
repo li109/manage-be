@@ -24,6 +24,9 @@ import me.zhengjie.modules.order.mapper.OrderMapper;
 import me.zhengjie.modules.order.service.OrderService;
 import me.zhengjie.modules.procedure.domain.Procedure;
 import me.zhengjie.modules.procedure.mapper.ProcedureMapper;
+import me.zhengjie.modules.procedure.service.ProcedureService;
+import me.zhengjie.modules.system.domain.User;
+import me.zhengjie.modules.system.mapper.UserMapper;
 import me.zhengjie.utils.FileUtil;
 import me.zhengjie.utils.PageResult;
 import me.zhengjie.utils.PageUtil;
@@ -50,6 +53,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     private final OrderMapper orderMapper;
     private final ProcedureMapper procedureMapper;
+    private final UserMapper userMapper;
+    private final ProcedureService procedureService;
 
     @Override
     public PageResult<Order> queryAll(OrderQueryCriteria criteria, Page<Object> page) {
@@ -64,23 +69,54 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Order getById(Long id) {
         Order order = orderMapper.selectById(id);
-        List<Procedure> list = procedureMapper.selectByOrder(order.getId());
-        order.setList(list);
+        if (order != null) {
+            // 获取工序信息
+            List<Procedure> list = procedureMapper.selectByOrder(order.getId());
+            order.setList(list);
+            // 获取创建人（开单员）
+            if (order.getCreateUser() != null) {
+                User user = userMapper.selectById(order.getCreateUser());
+                if (user != null) {
+                    order.setCreateUserName(user.getNickName());
+                }
+            }
+        }
+
         return order;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(Order resources) {
+        resources.setCreateUser(SecurityUtils.getCurrentUserId());
+        resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        resources.setIsDelete(false);
         orderMapper.insert(resources);
+        // 新增工序
+        if (resources.getList() != null && !resources.getList().isEmpty()) {
+            for (Procedure procedure : resources.getList()) {
+//                procedure.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                procedure.setOrderId(resources.getId());
+                procedure.setIsCheck(false);
+                procedure.setIsDelete(false);
+            }
+            procedureService.saveBatch(resources.getList());
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(Order resources) {
+        resources.setUpdateUser(SecurityUtils.getCurrentUserId());
+        resources.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+
         Order order = getById(resources.getId());
         order.copy(resources);
         orderMapper.updateById(order);
+        // 修改工序
+        if (resources.getList() != null && !resources.getList().isEmpty()) {
+            procedureService.updateBatchById(resources.getList());
+        }
     }
 
     @Override
