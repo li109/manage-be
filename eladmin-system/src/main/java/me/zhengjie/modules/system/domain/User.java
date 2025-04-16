@@ -23,11 +23,13 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import me.zhengjie.base.BaseEntity;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,13 +43,17 @@ import java.util.Set;
 public class User extends BaseEntity implements Serializable {
 
     @NotNull(groups = Update.class)
-    @TableId(value="user_id", type = IdType.AUTO)
+    @TableId(value = "user_id", type = IdType.AUTO)
     @ApiModelProperty(value = "ID", hidden = true)
     private Long id;
 
     @TableField(exist = false)
     @ApiModelProperty(value = "用户角色")
     private Set<Role> roles;
+
+    @TableField(exist = false)
+    @ApiModelProperty(value = "用户角色名称")
+    private List<String> roleNames;
 
     @TableField(exist = false)
     @ApiModelProperty(value = "用户岗位")
@@ -81,7 +87,7 @@ public class User extends BaseEntity implements Serializable {
     @ApiModelProperty(value = "用户性别")
     private String gender;
 
-    @ApiModelProperty(value = "头像真实名称",hidden = true)
+    @ApiModelProperty(value = "头像真实名称", hidden = true)
     private String avatarName;
 
     @ApiModelProperty(value = "头像存储的路径", hidden = true)

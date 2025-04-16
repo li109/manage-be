@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import me.zhengjie.utils.PageResult;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
 * @description 服务接口
@@ -81,4 +82,8 @@ public interface OrderService extends IService<Order> {
     * @throws IOException /
     */
     void download(List<Order> all, HttpServletResponse response) throws IOException;
+
+    String upload(MultipartFile file);
+
+    void finish(Long id);
 }

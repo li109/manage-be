@@ -4,7 +4,7 @@
     <resultMap id="BaseResultMap" type="me.zhengjie.modules.order.domain.Order">
         <id column="id" property="id"/>
         <result column="order_num" property="orderNum"/>
-        <result column="order_time" property="orderTime"/>
+<!--        <result column="order_time" property="orderTime"/>-->
         <result column="customer_name" property="customerName"/>
         <result column="product_title" property="productTitle"/>
         <result column="delivery_date" property="deliveryDate"/>
@@ -54,6 +54,30 @@
         <if test="criteria.customerName != null and criteria.customerName != ''">
             and o.customer_name like concat('%', #{criteria.customerName}, '%')
         </if>
+        <if test="criteria.isFinish != null">
+            and o.is_finish = #{criteria.isFinish}
+        </if>
+        <if test="criteria.productSize != null and criteria.productSize != ''">
+            and o.product_size like concat('%', #{criteria.productSize}, '%')
+        </if>
+        <if test="criteria.facialTissueSet != null and criteria.facialTissueSet != ''">
+            and o.facial_tissue_set like concat('%', #{criteria.facialTissueSet}, '%')
+        </if>
+        <if test="criteria.productTitle != null and criteria.productTitle != ''">
+            and o.product_title like concat('%', #{criteria.productTitle}, '%')
+        </if>
+        <if test="criteria.startTime != null and criteria.startTime != ''">
+            and o.delivery_date >= #{criteria.startTime}
+        </if>
+        <if test="criteria.endTime != null and criteria.endTime != ''">
+            <![CDATA[and o.delivery_date <= #{criteria.endTime} ]]>
+        </if>
         order by id desc
+    </select>
+    <select id="getMaxOrderNum" resultType="java.lang.String">
+        SELECT order_num
+        FROM `tb_order`
+        order by order_num desc
+        limit 1
     </select>
 </mapper>

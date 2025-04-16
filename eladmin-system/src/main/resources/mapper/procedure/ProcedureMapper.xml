@@ -4,7 +4,7 @@
     <resultMap id="BaseResultMap" type="me.zhengjie.modules.procedure.domain.Procedure">
         <id column="id" property="id"/>
         <result column="order_id" property="orderId"/>
-        <result column="workmanship" property="workmanship"/>
+<!--        <result column="workmanship" property="workmanship"/>-->
         <result column="produce_num" property="produceNum"/>
         <result column="loss_num" property="lossNum"/>
         <result column="is_check" property="isCheck"/>
@@ -23,7 +23,7 @@
     <sql id="Base_Column_List">
         id, order_id, workmanship, produce_num, loss_num, is_check, check_time, check_user, create_user, create_time, update_user, update_time, is_delete, delete_user, delete_time, detail_value
     </sql>
-    <select id="setLastFinishProcedure" resultType="java.lang.String">
+    <select id="getLastFinishProcedure" resultType="java.lang.String">
         SELECT a.label
         FROM `tb_procedure` p
         left join (
@@ -68,5 +68,19 @@
         SELECT count(1) as total
         FROM `tb_procedure`
         where order_id=#{orderId} and is_delete = 0 and create_user is not null
+    </select>
+    <select id="getLastFinishCount" resultType="java.lang.Integer">
+        SELECT p.produce_num
+        FROM `tb_procedure` p
+        left join (
+            SELECT de.detail_id,de.label,de.`value`,de.dict_sort
+            FROM `sys_dict_detail` de
+            left join sys_dict di on di.dict_id = de.dict_id
+            where di.`name`='procedure_status'
+            order by de.dict_sort
+        )a on p.detail_value = a.`value`
+        where order_id=#{orderId} and is_delete = 0 and create_user is not null
+        order by a.dict_sort desc
+        limit 1
     </select>
 </mapper>

@@ -94,11 +94,11 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
         if (resources.getOrderId() != null) {
             Order order = orderMapper.selectById(resources.getOrderId());
             if (order != null) {
-                // 获取当前工单完成工序数量
-                Integer count = procedureMapper.selectProcedureCount(order.getId());
-                order.setProgress(count * 10 + "%"); // 进度
+//                // 获取当前工单完成工序数量
+//                Integer count = procedureMapper.selectProcedureCount(order.getId());
+//                order.setProgress(count * 10 + "%"); // 进度
                 // 获取当前工单排序最靠后的工序名称
-                String name = procedureMapper.setLastFinishProcedure(order.getId());
+                String name = procedureMapper.getLastFinishProcedure(order.getId());
                 order.setFinishProcedure(name); //当前工序
                 orderMapper.updateById(order);
             }
@@ -125,11 +125,11 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
         if (procedure.getOrderId() != null) {
             Order order = orderMapper.selectById(procedure.getOrderId());
             if (order != null) {
-                // 获取当前工单完成工序数量
-                Integer count = procedureMapper.selectProcedureCount(order.getId());
-                order.setProgress(count * 10 + "%"); // 进度
+//                // 获取当前工单完成工序数量
+//                Integer count = procedureMapper.selectProcedureCount(order.getId());
+//                order.setProgress(count * 10 + "%"); // 进度
                 // 获取当前工单排序最靠后的工序名称
-                String name = procedureMapper.setLastFinishProcedure(order.getId());
+                String name = procedureMapper.getLastFinishProcedure(order.getId());
                 order.setFinishProcedure(name); //当前工序
                 orderMapper.updateById(order);
             }
@@ -155,7 +155,7 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
         for (Procedure procedure : all) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("订单ID", procedure.getOrderId());
-            map.put("工艺要求", procedure.getWorkmanship());
+//            map.put("工艺要求", procedure.getWorkmanship());
             map.put("生产数量", procedure.getProduceNum());
             map.put("损耗数量", procedure.getLossNum());
             map.put("是否审核：0-未审核；1-已审核", procedure.getIsCheck());

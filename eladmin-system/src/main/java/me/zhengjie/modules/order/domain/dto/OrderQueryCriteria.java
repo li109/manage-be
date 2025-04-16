@@ -36,4 +36,23 @@ public class OrderQueryCriteria{
 
     @ApiModelProperty(value = "客户名称")
     private String customerName;
+
+    @ApiModelProperty(value = "产品名称")
+    private String productTitle;
+
+    @ApiModelProperty(value = "订单是否完成（默认未完成）：0-未完成；1-已完成")
+    private Boolean isFinish;
+
+    @ApiModelProperty(value = "成品尺寸")
+    private String productSize;
+
+    @ApiModelProperty(value = "面纸配置")
+    private String facialTissueSet;
+
+    @ApiModelProperty(value = "开始时间（yyyy-MM-dd HH:mm:ss）")
+    private String startTime;
+
+    @ApiModelProperty(value = "结束时间（yyyy-MM-dd HH:mm:ss）")
+    private String endTime;
+
 }

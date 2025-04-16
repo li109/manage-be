@@ -45,8 +45,8 @@ public class Procedure implements Serializable {
     @ApiModelProperty(value = "订单ID")
     private Long orderId;
 
-    @ApiModelProperty(value = "工艺要求")
-    private String workmanship;
+//    @ApiModelProperty(value = "工艺要求")
+//    private String workmanship;
 
     @ApiModelProperty(value = "生产数量")
     private Integer produceNum;
@@ -56,6 +56,9 @@ public class Procedure implements Serializable {
 
     @ApiModelProperty(value = "损耗数量")
     private Integer lossNum;
+
+    @ApiModelProperty(value = "备注")
+    private String remarks;
 
     @ApiModelProperty(value = "是否审核：0-未审核；1-已审核")
     private Boolean isCheck;

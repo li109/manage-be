@@ -34,4 +34,7 @@ public interface OrderMapper extends BaseMapper<Order> {
     IPage<Order> findAll(@Param("criteria") OrderQueryCriteria criteria, Page<Object> page);
 
     List<Order> findAll(@Param("criteria") OrderQueryCriteria criteria);
+
+    String getMaxOrderNum();
+
 }

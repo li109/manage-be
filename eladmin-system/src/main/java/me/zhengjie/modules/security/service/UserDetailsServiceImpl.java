@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.exception.BadRequestException;
 import me.zhengjie.modules.security.service.dto.AuthorityDto;
 import me.zhengjie.modules.security.service.dto.JwtUserDto;
+import me.zhengjie.modules.system.domain.Role;
 import me.zhengjie.modules.system.domain.User;
 import me.zhengjie.modules.system.service.DataService;
 import me.zhengjie.modules.system.service.RoleService;
@@ -27,6 +28,7 @@ import me.zhengjie.modules.system.service.UserService;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Zheng Jie
@@ -52,6 +54,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 if (!user.getEnabled()) {
                     throw new BadRequestException("账号未激活！");
                 }
+                // 获取用户角色列表
+                List<Role> roles = roleService.findByUsersId(user.getId());
+                user.setRoleNames(roles.stream().map(Role::getName).collect(Collectors.toList()));
                 // 获取用户的权限
                 List<AuthorityDto> authorities = roleService.buildPermissions(user);
                 // 初始化JwtUserDto

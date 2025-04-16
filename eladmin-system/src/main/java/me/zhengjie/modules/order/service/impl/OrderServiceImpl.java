@@ -15,9 +15,12 @@
  */
 package me.zhengjie.modules.order.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import me.zhengjie.config.properties.FileProperties;
+import me.zhengjie.exception.BadRequestException;
 import me.zhengjie.modules.order.domain.Order;
 import me.zhengjie.modules.order.domain.dto.OrderQueryCriteria;
 import me.zhengjie.modules.order.mapper.OrderMapper;
@@ -27,20 +30,16 @@ import me.zhengjie.modules.procedure.mapper.ProcedureMapper;
 import me.zhengjie.modules.procedure.service.ProcedureService;
 import me.zhengjie.modules.system.domain.User;
 import me.zhengjie.modules.system.mapper.UserMapper;
-import me.zhengjie.utils.FileUtil;
-import me.zhengjie.utils.PageResult;
-import me.zhengjie.utils.PageUtil;
-import me.zhengjie.utils.SecurityUtils;
+import me.zhengjie.utils.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author xk
@@ -55,6 +54,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final ProcedureMapper procedureMapper;
     private final UserMapper userMapper;
     private final ProcedureService procedureService;
+    private final FileProperties properties;
 
     @Override
     public PageResult<Order> queryAll(OrderQueryCriteria criteria, Page<Object> page) {
@@ -91,6 +91,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         resources.setCreateUser(SecurityUtils.getCurrentUserId());
         resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
         resources.setIsDelete(false);
+        resources.setIsFinish(false);
+        // 生成顺序工单号：年份+7位顺序数字
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        // 获取最新的工单号
+        String orderNum = orderMapper.getMaxOrderNum();
+        // 如果没有历史工单，默认从1开始计算
+        if (!StringUtils.isNotBlank(orderNum)) {
+            orderNum = year + "0000001";
+        } else {
+            int num = Integer.parseInt(orderNum.substring(4)) + 1;
+            StringBuilder zero = new StringBuilder();
+            for (int i = 0; i < 7 - String.valueOf(num).length(); i++) {
+                zero.append("0");
+            }
+            orderNum = year + zero.toString() + num;
+        }
+        resources.setOrderNum(orderNum);
         orderMapper.insert(resources);
         // 新增工序
         if (resources.getList() != null && !resources.getList().isEmpty()) {
@@ -111,6 +129,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         resources.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 
         Order order = getById(resources.getId());
+//        if (order.getIsFinish()){
+//            throw new BadRequestException("订单已完成，无法修改！");
+//        }
         order.copy(resources);
         orderMapper.updateById(order);
         // 修改工序
@@ -138,7 +159,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         for (Order order : all) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("生产单号", order.getOrderNum());
-            map.put("下单时间", order.getOrderTime());
+//            map.put("下单时间", order.getOrderTime());
             map.put("客户名称", order.getCustomerName());
             map.put("产品名称", order.getProductTitle());
             map.put("交货日期", order.getDeliveryDate());
@@ -166,5 +187,39 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             list.add(map);
         }
         FileUtil.downloadExcel(list, response);
+    }
+
+    @Override
+    public String upload(MultipartFile multipartFile) {
+        // 文件大小验证
+        FileUtil.checkSize(properties.getMaxSize(), multipartFile.getSize());
+        // 验证文件上传的格式
+        String image = "gif jpg png jpeg bmp heif heic";
+        String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
+        if (fileType != null && !image.contains(fileType)) {
+            throw new BadRequestException("文件格式错误！, 仅支持图片类型： " + image + " 格式");
+        }
+        File file = FileUtil.upload(multipartFile, properties.getPath().getAvatar());
+        if (ObjectUtil.isNull(file)) {
+            throw new BadRequestException("上传失败");
+        }
+        return "/avatar/" + file.getName();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void finish(Long id) {
+        Order order = orderMapper.selectById(id);
+        if (order != null) {
+            order.setIsFinish(true);
+            order.setUpdateUser(SecurityUtils.getCurrentUserId());
+            order.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            // 获取最新工序的生产数量
+            Integer count = procedureMapper.getLastFinishCount(id);
+            if (count != null) {
+                order.setFinishCount(count.toString());
+            }
+            orderMapper.updateById(order);
+        }
     }
 }

@@ -47,8 +47,8 @@ public class Order implements Serializable {
     @ApiModelProperty(value = "生产单号")
     private String orderNum;
 
-    @ApiModelProperty(value = "下单时间")
-    private Timestamp orderTime;
+//    @ApiModelProperty(value = "下单时间")
+//    private Timestamp orderTime;
 
     @ApiModelProperty(value = "客户名称")
     private String customerName;
@@ -130,11 +130,20 @@ public class Order implements Serializable {
     @TableField(exist = false)
     private List<Procedure> list;
 
-    @ApiModelProperty(value = "完成进度（%）")
-    private String progress;
+//    @ApiModelProperty(value = "完成进度（%）")
+//    private String progress;
 
     @ApiModelProperty(value = "当前完成工序")
     private String finishProcedure;
+
+    @ApiModelProperty(value = "附件地址")
+    private String fileUrl;
+
+    @ApiModelProperty(value = "订单是否完成：0-未完成；1-已完成")
+    private Boolean isFinish;
+
+    @ApiModelProperty(value = "完成数量")
+    private String finishCount;
 
     public void copy(Order source) {
         BeanUtil.copyProperties(source, this, CopyOptions.create().setIgnoreNullValue(true));

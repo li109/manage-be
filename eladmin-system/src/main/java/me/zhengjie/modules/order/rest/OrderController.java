@@ -1,18 +1,3 @@
-/*
- *  Copyright 2019-2025 Zheng Jie
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package me.zhengjie.modules.order.rest;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -26,14 +11,12 @@ import me.zhengjie.modules.order.domain.Order;
 import me.zhengjie.modules.order.domain.dto.OrderQueryCriteria;
 import me.zhengjie.modules.order.service.OrderService;
 import me.zhengjie.utils.PageResult;
-import me.zhengjie.utils.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 /**
@@ -57,15 +40,19 @@ public class OrderController {
 
     @GetMapping("list")
     @ApiOperation("查询订单列表")
-    @PreAuthorize("@el.check('order:list')")
+//    @PreAuthorize("@el.check('order:list')")
     public ResponseEntity<PageResult<Order>> queryOrder(OrderQueryCriteria criteria) {
+        if (criteria.getIsFinish() == null) {
+            criteria.setIsFinish(false);
+        }
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return new ResponseEntity<>(orderService.queryAll(criteria, page), HttpStatus.OK);
     }
 
     @AnonymousGetMapping("orderNumList")
-    @ApiOperation("查询所有订单编号(小程序端)")
+    @ApiOperation("查询所有未完成的订单编号(小程序端)")
     public ResponseEntity<List<Order>> orderNumList(OrderQueryCriteria criteria) {
+        criteria.setIsFinish(false);
         return new ResponseEntity<>(orderService.queryAll(criteria), HttpStatus.OK);
     }
 
@@ -81,7 +68,7 @@ public class OrderController {
     @PostMapping("save")
     @Log("新增订单")
     @ApiOperation("新增订单")
-    @PreAuthorize("@el.check('order:add')")
+//    @PreAuthorize("@el.check('order:add')")
     public ResponseEntity<Object> createOrder(@Validated @RequestBody Order resources) {
         orderService.create(resources);
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -90,7 +77,7 @@ public class OrderController {
     @PutMapping("update")
     @Log("修改订单")
     @ApiOperation("修改订单")
-    @PreAuthorize("@el.check('order:edit')")
+//    @PreAuthorize("@el.check('order:edit')")
     public ResponseEntity<Object> updateOrder(@Validated @RequestBody Order resources) {
         orderService.update(resources);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -99,9 +86,27 @@ public class OrderController {
     @DeleteMapping("delete")
     @Log("删除订单")
     @ApiOperation("删除订单")
-    @PreAuthorize("@el.check('order:del')")
+//    @PreAuthorize("@el.check('order:del')")
     public ResponseEntity<Object> deleteOrder(@ApiParam(value = "传ID数组[]") @RequestBody List<Long> ids) {
         orderService.deleteAll(ids);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Log("完成订单")
+    @ApiOperation("完成订单")
+    @PostMapping("finish")
+//    @PreAuthorize("@el.check('order:finish')")
+    public ResponseEntity<Object> finishOrder(@ApiParam(value = "工单ID") @RequestParam("id") Long id) {
+        orderService.finish(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("upload")
+    @ApiOperation("上传附件(附件全地址为API地址+返回字符串)")
+    public ResponseEntity<Object> upload(
+            @ApiParam(value = "附件") @RequestParam("file") MultipartFile file
+    ) {
+        String url = orderService.upload(file);
+        return new ResponseEntity<>(url, HttpStatus.OK);
     }
 }
