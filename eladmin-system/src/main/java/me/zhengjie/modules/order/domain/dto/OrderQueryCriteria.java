@@ -40,7 +40,7 @@ public class OrderQueryCriteria{
     @ApiModelProperty(value = "产品名称")
     private String productTitle;
 
-    @ApiModelProperty(value = "订单是否完成（默认未完成）：0-未完成；1-已完成")
+    @ApiModelProperty(value = "订单是否完成（默认未完成）：0-未完成；1-已完成;NULL-全部")
     private Boolean isFinish;
 
     @ApiModelProperty(value = "成品尺寸")
@@ -48,6 +48,12 @@ public class OrderQueryCriteria{
 
     @ApiModelProperty(value = "面纸配置")
     private String facialTissueSet;
+
+    @ApiModelProperty(value = "面纸尺寸")
+    private String facialTissueSize;
+
+    @ApiModelProperty(value = "印刷专色")
+    private String spotColor;
 
     @ApiModelProperty(value = "开始时间（yyyy-MM-dd HH:mm:ss）")
     private String startTime;

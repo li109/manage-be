@@ -63,6 +63,12 @@
         <if test="criteria.facialTissueSet != null and criteria.facialTissueSet != ''">
             and o.facial_tissue_set like concat('%', #{criteria.facialTissueSet}, '%')
         </if>
+        <if test="criteria.facialTissueSize != null and criteria.facialTissueSize != ''">
+            and o.facial_tissue_size like concat('%', #{criteria.facialTissueSize}, '%')
+        </if>
+        <if test="criteria.spotColor != null and criteria.spotColor != ''">
+            and o.spot_color like concat('%', #{criteria.spotColor}, '%')
+        </if>
         <if test="criteria.productTitle != null and criteria.productTitle != ''">
             and o.product_title like concat('%', #{criteria.productTitle}, '%')
         </if>
@@ -77,6 +83,7 @@
     <select id="getMaxOrderNum" resultType="java.lang.String">
         SELECT order_num
         FROM `tb_order`
+        where create_time >= #{nowDay}
         order by order_num desc
         limit 1
     </select>

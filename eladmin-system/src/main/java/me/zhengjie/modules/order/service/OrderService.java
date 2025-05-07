@@ -83,7 +83,9 @@ public interface OrderService extends IService<Order> {
     */
     void download(List<Order> all, HttpServletResponse response) throws IOException;
 
-    String upload(MultipartFile file);
+    List<String> upload(MultipartFile[] file);
 
     void finish(Long id);
+
+    void copy(Long id);
 }

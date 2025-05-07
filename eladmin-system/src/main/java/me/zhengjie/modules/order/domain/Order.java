@@ -17,10 +17,7 @@ package me.zhengjie.modules.order.domain;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -57,6 +54,7 @@ public class Order implements Serializable {
     private String productTitle;
 
     @ApiModelProperty(value = "交货日期")
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private Timestamp deliveryDate;
 
     @ApiModelProperty(value = "成品数量")
@@ -71,6 +69,9 @@ public class Order implements Serializable {
     @ApiModelProperty(value = "面纸配置")
     private String facialTissueSet;
 
+    @ApiModelProperty(value = "面纸尺寸")
+    private String facialTissueSize;
+
     @ApiModelProperty(value = "调纸尺寸")
     private String adjustPaperSize;
 
@@ -79,6 +80,9 @@ public class Order implements Serializable {
 
     @ApiModelProperty(value = "印刷颜色")
     private String printColor;
+
+    @ApiModelProperty(value = "印刷专色")
+    private String spotColor;
 
     @ApiModelProperty(value = "瓦纸配置")
     private String tilePaperSet;

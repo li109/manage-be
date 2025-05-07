@@ -23,6 +23,17 @@
     <sql id="Base_Column_List">
         id, order_id, workmanship, produce_num, loss_num, is_check, check_time, check_user, create_user, create_time, update_user, update_time, is_delete, delete_user, delete_time, detail_value
     </sql>
+    <update id="deleteNotInIds">
+        update tb_procedure
+        set update_time = NOW(),update_user=#{updateUser},is_delete=1
+        where order_id=#{orderId} and is_delete = 0
+        <if test="ids != null and ids.size > 0">
+            and id not in
+            <foreach collection="ids" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </update>
     <select id="getLastFinishProcedure" resultType="java.lang.String">
         SELECT a.label
         FROM `tb_procedure` p
@@ -55,7 +66,7 @@
             where di.`name`='procedure_status'
             order by de.dict_sort
         )a
-        left join (
+        right join (
             select p.*,u.nick_name as createUserName,u2.nick_name as checkUserName
             from tb_order o
             left join tb_procedure p on o.id = p.order_id
@@ -63,6 +74,7 @@
             left join sys_user u2 on p.check_user = u2.user_id
             where o.id = #{orderId} and p.is_delete=0
         )b on a.`value` = b.detail_value
+        order by a.dict_sort
     </select>
     <select id="selectProcedureCount" resultType="java.lang.Integer">
         SELECT count(1) as total
@@ -82,5 +94,10 @@
         where order_id=#{orderId} and is_delete = 0 and create_user is not null
         order by a.dict_sort desc
         limit 1
+    </select>
+    <select id="selectSourceByOrder" resultType="me.zhengjie.modules.procedure.domain.Procedure">
+        select *
+        from tb_procedure
+        where is_delete=0 and order_id=#{orderId}
     </select>
 </mapper>

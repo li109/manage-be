@@ -88,4 +88,6 @@ public interface ProcedureService extends IService<Procedure> {
     void download(List<Procedure> all, HttpServletResponse response) throws IOException;
 
     void check(Long id);
+
+    void deleteNotInIds(Long orderId,List<Long> ids);
 }

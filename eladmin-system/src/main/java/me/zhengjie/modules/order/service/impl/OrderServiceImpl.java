@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -92,21 +93,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         resources.setCreateTime(new Timestamp(System.currentTimeMillis()));
         resources.setIsDelete(false);
         resources.setIsFinish(false);
-        // 生成顺序工单号：年份+7位顺序数字
+        // 生成顺序工单号：年月日+3位顺序数字
         Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat format2 = new SimpleDateFormat("yyyy-MM-dd");
+        String dayStr = format1.format(calendar.getTime());
+        String nowDay = format2.format(calendar.getTime());
         // 获取最新的工单号
-        String orderNum = orderMapper.getMaxOrderNum();
+        String orderNum = orderMapper.getMaxOrderNum(nowDay);
         // 如果没有历史工单，默认从1开始计算
         if (!StringUtils.isNotBlank(orderNum)) {
-            orderNum = year + "0000001";
+            orderNum = dayStr + "001";
         } else {
-            int num = Integer.parseInt(orderNum.substring(4)) + 1;
+            int num = Integer.parseInt(orderNum.substring(8)) + 1;
             StringBuilder zero = new StringBuilder();
-            for (int i = 0; i < 7 - String.valueOf(num).length(); i++) {
+            for (int i = 0; i < 3 - String.valueOf(num).length(); i++) {
                 zero.append("0");
             }
-            orderNum = year + zero.toString() + num;
+            orderNum = dayStr + zero.toString() + num;
         }
         resources.setOrderNum(orderNum);
         orderMapper.insert(resources);
@@ -125,19 +129,37 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(Order resources) {
+        // 更新订单
         resources.setUpdateUser(SecurityUtils.getCurrentUserId());
         resources.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-
         Order order = getById(resources.getId());
-//        if (order.getIsFinish()){
-//            throw new BadRequestException("订单已完成，无法修改！");
-//        }
         order.copy(resources);
-        orderMapper.updateById(order);
-        // 修改工序
-        if (resources.getList() != null && !resources.getList().isEmpty()) {
-            procedureService.updateBatchById(resources.getList());
+        if (resources.getDeliveryDate()== null){
+            order.setDeliveryDate(null);
         }
+        orderMapper.updateById(order);
+        // 修改工序（删除多余数据、更新回传数据、新增新数据）
+        List<Procedure> list = resources.getList();
+        List<Procedure> updateList = new ArrayList<>();
+        List<Procedure> insertList = new ArrayList<>();
+        List<Long> ids = new ArrayList<>();
+        for (Procedure item : list) {
+            item.setOrderId(order.getId());
+            if (item.getId() == null) {
+                item.setIsDelete(false);
+                item.setIsCheck(false);
+                insertList.add(item);
+            } else {
+                ids.add(item.getId());
+                item.setUpdateUser(SecurityUtils.getCurrentUserId());
+                item.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                updateList.add(item);
+            }
+        }
+        procedureService.deleteNotInIds(order.getId(), ids);
+        procedureService.saveBatch(insertList);
+        procedureService.updateBatchById(updateList);
+
     }
 
     @Override
@@ -190,20 +212,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
-    public String upload(MultipartFile multipartFile) {
-        // 文件大小验证
-        FileUtil.checkSize(properties.getMaxSize(), multipartFile.getSize());
-        // 验证文件上传的格式
-        String image = "gif jpg png jpeg bmp heif heic";
-        String fileType = FileUtil.getExtensionName(multipartFile.getOriginalFilename());
-        if (fileType != null && !image.contains(fileType)) {
-            throw new BadRequestException("文件格式错误！, 仅支持图片类型： " + image + " 格式");
+    public List<String> upload(MultipartFile[] multipartFile) {
+        List<String> urls = new ArrayList<>();
+        for (MultipartFile item : multipartFile) {
+            // 文件大小验证
+            FileUtil.checkSize(properties.getMaxSize(), item.getSize());
+            // 验证文件上传的格式
+            String image = "gif jpg png jpeg bmp heif heic";
+            String fileType = FileUtil.getExtensionName(item.getOriginalFilename());
+            if (fileType != null && !image.contains(fileType)) {
+                throw new BadRequestException("文件格式错误！, 仅支持图片类型： " + image + " 格式");
+            }
+            File file = FileUtil.upload(item, properties.getPath().getAvatar());
+            if (ObjectUtil.isNull(file)) {
+                throw new BadRequestException("上传失败");
+            }
+            urls.add("/avatar/" + file.getName());
         }
-        File file = FileUtil.upload(multipartFile, properties.getPath().getAvatar());
-        if (ObjectUtil.isNull(file)) {
-            throw new BadRequestException("上传失败");
-        }
-        return "/avatar/" + file.getName();
+        return urls;
     }
 
     @Override
@@ -221,5 +247,65 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
             orderMapper.updateById(order);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void copy(Long id) {
+        // 复制订单信息
+        Order order = baseMapper.selectById(id);
+        order.setId(null);
+        order.setIsFinish(false);
+        order.setFinishProcedure(null);
+        order.setFinishCount(null);
+        order.setCreateUser(SecurityUtils.getCurrentUserId());
+        order.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        order.setUpdateUser(null);
+        order.setUpdateTime(null);
+        order.setIsDelete(false);
+        order.setDeleteUser(null);
+        order.setDeleteTime(null);
+        // 生成顺序工单号：年月日+3位顺序数字
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat format2 = new SimpleDateFormat("yyyy-MM-dd");
+        String dayStr = format1.format(calendar.getTime());
+        String nowDay = format2.format(calendar.getTime());
+        // 获取最新的工单号
+        String orderNum = orderMapper.getMaxOrderNum(nowDay);
+        // 如果没有历史工单，默认从1开始计算
+        if (!StringUtils.isNotBlank(orderNum)) {
+            orderNum = dayStr + "001";
+        } else {
+            int num = Integer.parseInt(orderNum.substring(8)) + 1;
+            StringBuilder zero = new StringBuilder();
+            for (int i = 0; i < 3 - String.valueOf(num).length(); i++) {
+                zero.append("0");
+            }
+            orderNum = dayStr + zero.toString() + num;
+        }
+        order.setOrderNum(orderNum);
+        orderMapper.insert(order);
+        // 复制工序信息
+        List<Procedure> list = procedureMapper.selectSourceByOrder(id);
+        for (Procedure item : list) {
+            item.setId(null);
+            item.setOrderId(order.getId());
+            item.setProduceNum(null);
+            item.setProduceNumStr(null);
+            item.setLossNum(null);
+            item.setRemarks(null);
+            item.setIsCheck(false);
+            item.setCheckTime(null);
+            item.setCheckUser(null);
+            item.setCreateUser(null);
+            item.setCreateTime(null);
+            item.setUpdateTime(null);
+            item.setUpdateUser(null);
+            item.setIsDelete(false);
+            item.setDeleteUser(null);
+            item.setDeleteTime(null);
+        }
+        procedureService.saveBatch(list);
     }
 }

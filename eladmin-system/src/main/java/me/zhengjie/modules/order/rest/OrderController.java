@@ -42,9 +42,9 @@ public class OrderController {
     @ApiOperation("查询订单列表")
 //    @PreAuthorize("@el.check('order:list')")
     public ResponseEntity<PageResult<Order>> queryOrder(OrderQueryCriteria criteria) {
-        if (criteria.getIsFinish() == null) {
-            criteria.setIsFinish(false);
-        }
+//        if (criteria.getIsFinish() == null) {
+//            criteria.setIsFinish(false);
+//        }
         Page<Object> page = new Page<>(criteria.getPage(), criteria.getSize());
         return new ResponseEntity<>(orderService.queryAll(criteria, page), HttpStatus.OK);
     }
@@ -71,6 +71,15 @@ public class OrderController {
 //    @PreAuthorize("@el.check('order:add')")
     public ResponseEntity<Object> createOrder(@Validated @RequestBody Order resources) {
         orderService.create(resources);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("copy")
+    @Log("生成新订单")
+    @ApiOperation("生成新订单")
+//    @PreAuthorize("@el.check('order:copy')")
+    public ResponseEntity<Object> copy(@ApiParam(value = "订单ID") @RequestParam("id") Long id) {
+        orderService.copy(id);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -104,9 +113,9 @@ public class OrderController {
     @PostMapping("upload")
     @ApiOperation("上传附件(附件全地址为API地址+返回字符串)")
     public ResponseEntity<Object> upload(
-            @ApiParam(value = "附件") @RequestParam("file") MultipartFile file
+            @ApiParam(value = "附件数组[]") @RequestParam("file")MultipartFile [] file
     ) {
-        String url = orderService.upload(file);
+        List<String> url = orderService.upload(file);
         return new ResponseEntity<>(url, HttpStatus.OK);
     }
 }

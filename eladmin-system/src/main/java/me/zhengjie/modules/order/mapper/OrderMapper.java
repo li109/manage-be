@@ -35,6 +35,6 @@ public interface OrderMapper extends BaseMapper<Order> {
 
     List<Order> findAll(@Param("criteria") OrderQueryCriteria criteria);
 
-    String getMaxOrderNum();
+    String getMaxOrderNum(@Param("nowDay") String nowDay);
 
 }

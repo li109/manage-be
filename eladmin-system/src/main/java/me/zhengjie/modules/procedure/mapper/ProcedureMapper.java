@@ -43,4 +43,12 @@ public interface ProcedureMapper extends BaseMapper<Procedure> {
     String getLastFinishProcedure(@Param("orderId") Long id);
 
     Integer getLastFinishCount(Long id);
+
+    List<Procedure> selectSourceByOrder(@Param("orderId") Long id);
+
+    void deleteNotInIds(
+            @Param("orderId") Long orderId,
+            @Param("ids") List<Long> ids,
+            @Param("updateUser") Long updateUser
+    );
 }

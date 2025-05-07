@@ -130,7 +130,13 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
 //                order.setProgress(count * 10 + "%"); // 进度
                 // 获取当前工单排序最靠后的工序名称
                 String name = procedureMapper.getLastFinishProcedure(order.getId());
-                order.setFinishProcedure(name); //当前工序
+                order.setFinishProcedure(name); // 当前工序
+                // 回写最新工序的生产数量到工单完成数量字段
+                Integer count = procedureMapper.getLastFinishCount(order.getId());
+                if (count != null) {
+                    order.setFinishCount(count.toString()); // 完成数量
+                }
+
                 orderMapper.updateById(order);
             }
         }
@@ -184,5 +190,11 @@ public class ProcedureServiceImpl extends ServiceImpl<ProcedureMapper, Procedure
             procedure.setCheckTime(new Timestamp(System.currentTimeMillis()));
         }
         procedureMapper.updateById(procedure);
+    }
+
+    @Override
+    public void deleteNotInIds(Long orderId, List<Long> ids) {
+        Long updateUser = SecurityUtils.getCurrentUserId();
+        baseMapper.deleteNotInIds(orderId, ids, updateUser);
     }
 }
